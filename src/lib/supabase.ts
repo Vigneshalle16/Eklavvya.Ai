@@ -1,10 +1,18 @@
 import { createClient } from '@supabase/supabase-js';
 
-// For Lovable's native Supabase integration, the environment variables are automatically provided
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://placeholder.supabase.co';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'placeholder-key';
+// In Lovable's native Supabase integration, these environment variables should be automatically available
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-// Create Supabase client - in Lovable's native integration, this will be automatically configured
+console.log('Supabase URL:', supabaseUrl);
+console.log('Supabase Key exists:', !!supabaseAnonKey);
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error('Missing Supabase environment variables');
+  console.log('Available env vars:', Object.keys(import.meta.env));
+  throw new Error('Supabase configuration is not available. Please ensure Supabase integration is properly set up.');
+}
+
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // Database Types
