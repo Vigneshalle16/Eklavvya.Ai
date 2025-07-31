@@ -14,7 +14,177 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      assessments: {
+        Row: {
+          completed_at: string | null
+          difficulty_level: string
+          id: string
+          learning_style: string
+          score: number
+          subject: string
+          total_questions: number
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          difficulty_level: string
+          id?: string
+          learning_style: string
+          score: number
+          subject: string
+          total_questions: number
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          difficulty_level?: string
+          id?: string
+          learning_style?: string
+          score?: number
+          subject?: string
+          total_questions?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      learning_paths: {
+        Row: {
+          created_at: string | null
+          description: string
+          difficulty_level: string
+          estimated_duration: number
+          id: string
+          progress: number | null
+          subjects: string[]
+          title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          description: string
+          difficulty_level: string
+          estimated_duration: number
+          id?: string
+          progress?: number | null
+          subjects: string[]
+          title: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string
+          difficulty_level?: string
+          estimated_duration?: number
+          id?: string
+          progress?: number | null
+          subjects?: string[]
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      smart_goals: {
+        Row: {
+          created_at: string | null
+          description: string
+          id: string
+          progress: number | null
+          status: string | null
+          target_date: string
+          title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          description: string
+          id?: string
+          progress?: number | null
+          status?: string | null
+          target_date: string
+          title: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string
+          id?: string
+          progress?: number | null
+          status?: string | null
+          target_date?: string
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      study_sessions: {
+        Row: {
+          completed: boolean | null
+          created_at: string | null
+          duration: number
+          id: string
+          notes: string | null
+          scheduled_at: string
+          subject: string
+          user_id: string
+        }
+        Insert: {
+          completed?: boolean | null
+          created_at?: string | null
+          duration: number
+          id?: string
+          notes?: string | null
+          scheduled_at: string
+          subject: string
+          user_id: string
+        }
+        Update: {
+          completed?: boolean | null
+          created_at?: string | null
+          duration?: number
+          id?: string
+          notes?: string | null
+          scheduled_at?: string
+          subject?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      users: {
+        Row: {
+          created_at: string | null
+          email: string
+          full_name: string
+          grade_level: string
+          id: string
+          learning_goals: string[] | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          full_name: string
+          grade_level: string
+          id?: string
+          learning_goals?: string[] | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          full_name?: string
+          grade_level?: string
+          id?: string
+          learning_goals?: string[] | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
