@@ -17,6 +17,7 @@ import {
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAIAssistant } from '@/hooks/useAIAssistant';
 
 interface UserProfile {
   full_name: string;
@@ -48,6 +49,7 @@ interface SmartGoal {
 const Dashboard = () => {
   const { user, signOut } = useAuth();
   const { toast } = useToast();
+  const { generateStudyPlan, analyzePerformance, loading: aiLoading } = useAIAssistant();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [assessments, setAssessments] = useState<Assessment[]>([]);
   const [learningPaths, setLearningPaths] = useState<LearningPath[]>([]);
@@ -124,6 +126,45 @@ const Dashboard = () => {
         description: "Failed to sign out",
         variant: "destructive",
       });
+    }
+  };
+
+  const handleGenerateStudyPlan = async () => {
+    if (!user) return;
+    
+    try {
+      const studyPlan = await generateStudyPlan({
+        subjects: ['Mathematics', 'Physics', 'Chemistry'],
+        studyHours: 4,
+        targetDate: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(),
+      }, user.id);
+
+      toast({
+        title: "Study Plan Generated!",
+        description: "Your personalized AI study plan has been created.",
+      });
+
+      // Reload learning paths to show the new one
+      loadDashboardData();
+    } catch (error) {
+      // Error is handled in the hook
+    }
+  };
+
+  const handleAnalyzePerformance = async () => {
+    if (!user) return;
+    
+    try {
+      const analysis = await analyzePerformance({}, user.id);
+      
+      toast({
+        title: "Performance Analysis Complete!",
+        description: "AI has analyzed your learning patterns and progress.",
+      });
+
+      console.log('Performance Analysis:', analysis);
+    } catch (error) {
+      // Error is handled in the hook
     }
   };
 
@@ -263,7 +304,12 @@ const Dashboard = () => {
                 <div className="text-center py-8">
                   <BookOpen className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                   <p className="text-gray-600 mb-4">No learning paths yet</p>
-                  <Button>Take Your First Assessment</Button>
+                  <div className="space-y-2">
+                    <Button onClick={handleGenerateStudyPlan} disabled={aiLoading}>
+                      {aiLoading ? 'Generating...' : '🤖 Generate AI Study Plan'}
+                    </Button>
+                    <Button variant="outline">Take Your First Assessment</Button>
+                  </div>
                 </div>
               )}
             </CardContent>
@@ -312,44 +358,102 @@ const Dashboard = () => {
           </Card>
         </div>
 
-        {/* Recent Assessments */}
-        <Card className="mt-8">
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Award className="h-5 w-5 mr-2" />
-              Recent Assessment Results
-            </CardTitle>
-            <CardDescription>
-              Your latest performance across different subjects
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {assessments.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {assessments.map((assessment, index) => (
-                  <div key={index} className="border rounded-lg p-4 text-center">
-                    <h4 className="font-semibold mb-2">{assessment.subject}</h4>
-                    <div className="text-3xl font-bold text-primary mb-2">
-                      {Math.round((assessment.score / assessment.total_questions) * 100)}%
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
+          {/* Recent Assessments */}
+          <Card className="lg:col-span-2">
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Award className="h-5 w-5 mr-2" />
+                Recent Assessment Results
+              </CardTitle>
+              <CardDescription>
+                Your latest performance across different subjects
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {assessments.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {assessments.map((assessment, index) => (
+                    <div key={index} className="border rounded-lg p-4 text-center">
+                      <h4 className="font-semibold mb-2">{assessment.subject}</h4>
+                      <div className="text-3xl font-bold text-primary mb-2">
+                        {Math.round((assessment.score / assessment.total_questions) * 100)}%
+                      </div>
+                      <p className="text-sm text-gray-600">
+                        {assessment.score}/{assessment.total_questions} correct
+                      </p>
+                      <Badge variant="outline" className="mt-2">
+                        {assessment.difficulty_level}
+                      </Badge>
                     </div>
-                    <p className="text-sm text-gray-600">
-                      {assessment.score}/{assessment.total_questions} correct
-                    </p>
-                    <Badge variant="outline" className="mt-2">
-                      {assessment.difficulty_level}
-                    </Badge>
-                  </div>
-                ))}
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <Award className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-600 mb-4">No assessments taken yet</p>
+                  <Button>Take Your First Assessment</Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* AI Assistant Panel */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                🤖 AI Assistant
+              </CardTitle>
+              <CardDescription>
+                Get personalized insights and recommendations
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Button 
+                className="w-full" 
+                onClick={handleAnalyzePerformance}
+                disabled={aiLoading}
+                variant="default"
+              >
+                {aiLoading ? 'Analyzing...' : '📊 Analyze Performance'}
+              </Button>
+              
+              <Button 
+                className="w-full" 
+                onClick={handleGenerateStudyPlan}
+                disabled={aiLoading}
+                variant="outline"
+              >
+                {aiLoading ? 'Generating...' : '📚 Generate Study Plan'}
+              </Button>
+
+              <div className="p-4 bg-blue-50 rounded-lg">
+                <h4 className="font-semibold text-blue-900 mb-2">💡 AI Tip</h4>
+                <p className="text-sm text-blue-800">
+                  {assessments.length > 0 
+                    ? "Based on your recent assessments, focus on practice problems to improve retention."
+                    : "Take your first assessment to get personalized AI recommendations!"
+                  }
+                </p>
               </div>
-            ) : (
-              <div className="text-center py-8">
-                <Award className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600 mb-4">No assessments taken yet</p>
-                <Button>Take Your First Assessment</Button>
+
+              <div className="p-4 bg-green-50 rounded-lg">
+                <h4 className="font-semibold text-green-900 mb-2">🎯 Quick Actions</h4>
+                <div className="space-y-2">
+                  <Button size="sm" variant="ghost" className="w-full justify-start">
+                    📝 Ask AI a Question
+                  </Button>
+                  <Button size="sm" variant="ghost" className="w-full justify-start">
+                    📈 View Progress Report
+                  </Button>
+                  <Button size="sm" variant="ghost" className="w-full justify-start">
+                    🎲 Get Random Quiz
+                  </Button>
+                </div>
               </div>
-            )}
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );
