@@ -1,3 +1,4 @@
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -116,19 +117,59 @@ async function generateStudyPlan(data: any, userId: string, supabase: any) {
 
 async function explainQuestion(data: any) {
   const { question, subject, difficulty } = data;
+  const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
   
-  // AI logic for explaining questions step by step
-  const explanation = {
-    concept: extractCoreConcept(question, subject),
-    stepByStep: generateStepByStepSolution(question, subject),
-    alternativeMethods: suggestAlternativeMethods(question, subject),
-    relatedTopics: findRelatedTopics(question, subject),
-    practiceQuestions: generatePracticeQuestions(question, subject, difficulty),
-    mnemonics: generateMnemonics(question, subject),
-    visualAids: suggestVisualAids(question, subject)
-  };
+  if (!openAIApiKey) {
+    throw new Error('OpenAI API key not configured');
+  }
 
-  return explanation;
+  const prompt = `As an expert tutor in ${subject}, provide a comprehensive explanation for this ${difficulty} level question:
+
+"${question}"
+
+Please structure your response as JSON with these fields:
+- concept: Core concept being tested
+- stepByStep: Array of step-by-step solution steps
+- alternativeMethods: Array of alternative solution approaches
+- relatedTopics: Array of related topics to study
+- practiceQuestions: Array of 2-3 similar practice questions
+- tips: Array of helpful tips and mnemonics
+- commonMistakes: Array of common mistakes to avoid
+
+Make the explanation clear and educational for a student at ${difficulty} level.`;
+
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${openAIApiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'gpt-4o-mini',
+      messages: [
+        { role: 'system', content: 'You are an expert educational tutor. Always respond with valid JSON.' },
+        { role: 'user', content: prompt }
+      ],
+      temperature: 0.7,
+    }),
+  });
+
+  const aiResponse = await response.json();
+  
+  try {
+    return JSON.parse(aiResponse.choices[0].message.content);
+  } catch (error) {
+    // Fallback if JSON parsing fails
+    return {
+      concept: `Core concepts in ${subject}`,
+      stepByStep: aiResponse.choices[0].message.content.split('\n').filter(line => line.trim()),
+      alternativeMethods: ["Alternative approach available"],
+      relatedTopics: [`Related ${subject} topics`],
+      practiceQuestions: ["Practice more similar questions"],
+      tips: ["Focus on understanding the fundamentals"],
+      commonMistakes: ["Double-check your calculations"]
+    };
+  }
 }
 
 async function analyzePerformance(data: any, userId: string, supabase: any) {
